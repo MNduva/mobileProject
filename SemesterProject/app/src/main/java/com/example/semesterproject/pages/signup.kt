@@ -21,11 +21,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.semesterproject.viewmodels.AuthViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // Keep the activity class if you want (not required for navigation but harmless)
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             // Use default MaterialTheme
             MaterialTheme {
@@ -41,7 +44,12 @@ class SignUpActivity : ComponentActivity() {
 
 @Composable
 fun SignUpScreen(
+    viewModel:AuthViewModel = viewModel(),
     onSignUpClick: (String, String, String, String, String, String) -> Unit = { _, _, _, _, _, _ -> },
+    //Calling the ViewModel Package
+
+
+
     onBackClick: () -> Unit = {},
     onSuccess: () -> Unit = {}
 ) {
@@ -51,6 +59,23 @@ fun SignUpScreen(
     var phoneNumber by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+
+    // Observe ViewModel states
+    val isLoading by viewModel.isLoading
+    val errorMessage by viewModel.errorMessage
+    val isSuccess by viewModel.isSignUpSuccess
+
+    // Handle Success Navigation
+    LaunchedEffect(isSuccess) {
+        if (isSuccess) {
+            onSuccess() // Navigate to home/login
+            viewModel.resetState()
+        }
+    }
+
+
+
 
     Box(
         modifier = Modifier
@@ -163,16 +188,15 @@ fun SignUpScreen(
                     // Sign Up Button (call both onSignUpClick and onSuccess)
                     Button(
                         onClick = {
-                            onSignUpClick(
-                                firstName,
-                                lastName,
-                                email,
-                                phoneNumber,
-                                password,
-                                confirmPassword
+                            // Call the ViewModel function with all current state values
+                            viewModel.signUp(
+                                firstName = firstName,
+                                lastName = lastName,
+                                email = email,
+                                phoneNumber = phoneNumber,
+                                password = password,
+                                confirmPassword = confirmPassword
                             )
-                            // after callback, call app-level success (navigation)
-                            onSuccess()
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF7FB89A)
@@ -189,7 +213,16 @@ fun SignUpScreen(
                             fontWeight = FontWeight.Medium
                         )
                     }
+
+                    if (errorMessage != null) {
+                        Text(
+                            text = errorMessage!!,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
                 }
+
             }
 
             Spacer(modifier = Modifier.height(24.dp))
