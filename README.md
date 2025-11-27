@@ -1,1 +1,0 @@
-# AgriShare-MAD
